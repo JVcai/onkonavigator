@@ -4,7 +4,7 @@ var doc=document, root=doc.documentElement, hdr=doc.querySelector('.site-header'
 /* ---- шапка: тень, прогресс, активный пункт ---- */
 var bar=doc.createElement('div');bar.className='progress';doc.body.appendChild(bar);
 var links=[].slice.call(doc.querySelectorAll('.site-nav a')),
-    secs=links.map(function(a){return doc.querySelector(a.getAttribute('href'))});
+    secs=links.map(function(a){var h=a.getAttribute('href');return h&&h.charAt(0)==='#'?doc.querySelector(h):null});
 function onScroll(){
   var y=window.scrollY,h=root.scrollHeight-window.innerHeight;
   hdr.classList.toggle('scrolled',y>10);
@@ -60,4 +60,44 @@ faq.forEach(function(item){
     if(open){item.classList.add('open');btn.setAttribute('aria-expanded','true')}
   });
 });
+
+/* ---- Google Analytics 4 + согласие на cookie ---- */
+var GA_ID='G-XXXXXXXXXX'; /* ← вставьте Measurement ID из GA4 (Admin → Data streams) */
+var KEY='cookie-consent',gaLoaded=false;
+function store(v){try{if(v===undefined)return localStorage.getItem(KEY);localStorage.setItem(KEY,v)}catch(e){return null}}
+function loadGA(){
+  if(gaLoaded||!/^G-[A-Z0-9]{6,}$/.test(GA_ID)||GA_ID==='G-XXXXXXXXXX')return;
+  gaLoaded=true;
+  var s=doc.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;doc.head.appendChild(s);
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=function(){dataLayer.push(arguments)};
+  gtag('js',new Date());gtag('config',GA_ID,{anonymize_ip:true});
+}
+function track(name,params){if(gaLoaded&&window.gtag)gtag('event',name,params||{})}
+/* клик по WhatsApp → событие whatsapp_click */
+doc.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[href*="wa.me"],a[href*="whatsapp.com"]');
+  if(!a)return;
+  var sec=a.closest('section[id],header,footer');
+  track('whatsapp_click',{
+    button_location:sec?(sec.id||sec.tagName.toLowerCase()):'page',
+    link_text:(a.textContent||'').replace(/\s+/g,' ').trim().slice(0,60),
+    page_path:location.pathname
+  });
+});
+/* баннер согласия */
+var banner;
+function showBanner(){
+  if(banner){banner.hidden=false;requestAnimationFrame(function(){banner.classList.add('show')});return}
+  banner=doc.createElement('div');banner.className='cookie';banner.setAttribute('role','dialog');banner.setAttribute('aria-label','Cookie');
+  banner.innerHTML='<p>Мы используем cookie и Google Analytics, чтобы понимать, какие разделы сайта полезны. Данные обезличены. <a href="privacy.html#sec6">Подробнее</a></p><div><button type="button" class="cookie-no">Отклонить</button><button type="button" class="cookie-yes">Принять</button></div>';
+  doc.body.appendChild(banner);
+  banner.querySelector('.cookie-yes').addEventListener('click',function(){store('granted');hideBanner();loadGA()});
+  banner.querySelector('.cookie-no').addEventListener('click',function(){store('denied');hideBanner()});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){banner.classList.add('show')})});
+}
+function hideBanner(){banner.classList.remove('show');setTimeout(function(){banner.hidden=true},500)}
+[].slice.call(doc.querySelectorAll('.cookie-open')).forEach(function(b){b.addEventListener('click',showBanner)});
+var saved=store();
+if(saved==='granted')loadGA();else if(!saved)setTimeout(showBanner,1200);
 })();
