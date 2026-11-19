@@ -66,7 +66,7 @@ var GA_ID='G-XXXXXXXXXX'; /* ← вставьте Measurement ID из GA4 (Admin
 var KEY='cookie-consent',gaLoaded=false;
 function store(v){try{if(v===undefined)return localStorage.getItem(KEY);localStorage.setItem(KEY,v)}catch(e){return null}}
 function loadGA(){
-  if(gaLoaded||!/^G-[A-Z0-9]{6,}$/.test(GA_ID)||GA_ID==='G-XXXXXXXXXX')return;
+  if(gaLoaded||!/^G-[A-Z0-9]{6,}$/.test(GA_ID)||GA_ID==='G-C1VYWG5LHX')return;
   gaLoaded=true;
   var s=doc.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA_ID;doc.head.appendChild(s);
   window.dataLayer=window.dataLayer||[];
